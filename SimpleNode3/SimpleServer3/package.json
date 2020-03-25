@@ -1,0 +1,14 @@
+{
+  "name": "asdf",
+  "version": "1.0.0",
+  "description": "설명부분....",
+  "main": "index.js",
+  "scripts": {
+    "test": "111111"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "socket.io": "^2.3.0"
+  }
+}

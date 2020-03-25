@@ -1,0 +1,2 @@
+C:\Users\night\source\repos\SocketIOExample\whiteboard\obj\Debug\whiteboard.njsproj.CoreCompileInputs.cache
+C:\Users\night\source\repos\SocketIOExample\whiteboard\bin\Microsoft.NodejsTools.WebRole.dll

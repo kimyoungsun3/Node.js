@@ -1,0 +1,227 @@
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using SocketIO;
+
+namespace NodeTest
+{
+	[System.Serializable]
+	public class PlayerData
+	{
+		public string id;
+		public bool isMy;
+		public float health;
+
+		public void SetData(SocketIOEvent _e, bool _isMy = false)
+		{
+			id		= _e.data.GetField("id").str;
+			isMy	= _isMy;
+			health	= 100f;
+		}
+	}
+	public enum eAttackKind { None, Normal, Skill1, Skill2, Skill3}
+	public class Player : MonoBehaviour
+	{
+		public static Dictionary<string, Player> dicPlayer = new Dictionary<string, Player>();
+
+		Transform trans;
+		public PlayerData playerData;
+		bool isDead = false;
+
+		Vector3 move;
+		[SerializeField]float SEND_PER_SECOND = 20;
+		float NEXT_TIME;
+		float nextTime;
+		[SerializeField] float speedMove = 2f;
+		[SerializeField] float speedTurn = 360f;
+		Vector3 beforePos, targetPosition;
+		Quaternion beforeRotation, targetRotation;
+
+		Camera cam;
+		[SerializeField] Bullet prefabBullet;
+		public Transform spawnPoint;
+		[SerializeField] float NEXT_SHOOT = 2f;
+		[SerializeField] float NEXT_BLINK = 10f;
+		float nextShoot, nextBlink;
+
+		//공격에 관한것...
+		public eAttackKind attackKind;
+		Vector3 attackPosition;
+		Quaternion attackRotation;
+		[SerializeField] Transform hpTrans;
+
+		private void Start()
+		{
+			Debug.Log(this + " Start");
+
+		}
+
+		public void SetData(SocketIOEvent _e, bool _isMy = false)
+		{
+
+			Debug.Log(this + " SetData");
+			playerData.SetData(_e, _isMy);
+			isDead			= false;
+			trans			= transform;
+			beforePos		= trans.position;
+			beforeRotation	= trans.rotation;
+			NEXT_TIME		= 1 / SEND_PER_SECOND;
+			if (_isMy)	cam = Camera.main;
+
+			if (!dicPlayer.ContainsKey(playerData.id))
+			{
+				dicPlayer.Add(playerData.id, this);
+			}
+			else
+			{
+				Debug.LogError(" 중복생성되는 것임...");
+			}
+		}
+
+
+		public void NetSetPosition(Vector3 _pos, Quaternion _rot)
+		{
+			targetPosition = _pos;
+			targetRotation = _rot;
+		}
+
+		bool isBlink;
+		public void NetSetBlink(Vector3 _pos, Quaternion _rot)
+		{
+			//Debug.Log(" >> blink 2");
+			isBlink = true;
+			targetPosition = _pos;
+			targetRotation = _rot;
+		}
+
+		public void NetSetAttackNormal(eAttackKind _attackKind, Vector3 _pos, Quaternion _rot)
+		{
+			//Debug.Log(this + " >> _attackKind : " + _attackKind + ":" + _pos + ":" + _rot);
+			attackKind		= _attackKind;
+			attackPosition	= _pos;
+			attackRotation	= _rot;
+		}
+
+		public static void DestroyPlayer(SocketIOEvent _e)
+		{
+			Debug.Log( "Player.static DestroyPlayer");
+			string _id = _e.data.GetField("id").str;
+			if (dicPlayer.ContainsKey(_id))
+			{
+				Destroy(dicPlayer[_id].gameObject);
+				dicPlayer.Remove(_id);
+			}
+		}
+
+
+		public void SetDamage(float _damage)
+		{
+			//Debug.Log(this + " SetDamage");
+			playerData.health -= _damage;
+			hpTrans.localScale = new Vector3(playerData.health / 100f, 1f, 1f);
+
+			if (!isDead && playerData.health <= 0f) {
+				isDead = true;
+
+				//dead 처리...
+				//....
+				Debug.Log("#### >> dead send/ 이하처리");
+			}
+		}
+
+		void Update()
+		{
+			//Debug.Log(this + " Update " + playerData.isMy);
+
+			if (playerData.isMy)
+			{
+				Vector3 _point	= cam.ScreenToWorldPoint(Input.mousePosition);
+				Vector3 _dir	= _point - trans.position;
+				trans.rotation	= Util.LookRotation2D(_dir);
+
+				move.Set(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"), 0);
+				trans.Translate(move.normalized * speedMove * Time.deltaTime, Space.World);
+
+				//Shoot
+				if (Time.time > nextShoot && Input.GetMouseButton(0))
+				{
+					nextShoot = Time.time + NEXT_SHOOT;
+
+					Attack(eAttackKind.Normal, spawnPoint.position, spawnPoint.rotation);
+					NetworkManager.ins.SendCode(Protocol.PTC_ATTACK);
+					/*
+					CPacket _packet = CPacketBufferManager.GetPacket((short)Protocol.PTC_ATTACK_NORMAL);
+					//_packet.SetInt(playerData.userID);
+					_packet.SetShort((short)eAttackKind.Noraml);
+					_packet.SetVector3(spawnPoint.position);
+					_packet.SetQuaternion(spawnPoint.rotation);
+					NetworkManager.ins.unityService.SendCode(_packet);
+					*/
+				}
+
+				if (Time.time > nextBlink && Input.GetMouseButtonDown(1))
+				{
+					nextBlink = Time.time + NEXT_BLINK;
+					_dir.z = 0f;
+					_dir.Normalize();
+					trans.position = trans.position + _dir * 2f;
+					NetworkManager.ins.SendCode(Protocol.PTC_BLINK);
+				}
+
+				if (Time.time > nextTime
+					&& (beforePos != trans.position || beforeRotation != trans.rotation))
+				{
+					//Debug.Log(" >> my:" + trans.position);
+					nextTime		= Time.time + NEXT_TIME;
+					beforePos		= trans.position;
+					beforeRotation	= trans.rotation;
+
+					NetworkManager.ins.SendCode(Protocol.PTC_MOVE);
+					/*
+					CPacket _packet = CPacketBufferManager.GetPacket((short)Protocol.PTC_MOVING);
+					_packet.SetInt(playerData.userID);
+					_packet.SetVector3(beforePos);
+					_packet.SetQuaternion(beforeRotation);
+					NetworkManager.ins.unityService.SendCode(_packet);
+					*/
+				}
+			}
+			else
+			{
+				if (isBlink)
+				{
+					//Debug.Log(" >> blink 3");
+					isBlink = false;
+					trans.position = targetPosition;
+					trans.rotation = targetRotation;
+				}
+				trans.position = Vector3.MoveTowards(trans.position, targetPosition, speedMove * Time.deltaTime);
+				trans.rotation = Quaternion.RotateTowards(trans.rotation, targetRotation, speedTurn * Time.deltaTime);
+
+				if (attackKind != eAttackKind.None)
+				{
+					Attack(attackKind, attackPosition, attackRotation);
+					attackKind = eAttackKind.None;
+				}
+			}
+		}
+
+		void Attack(eAttackKind _attackKind, Vector3 _pos, Quaternion _rot)
+		{
+			Debug.Log(this + " " + playerData.id + " Attack " + _attackKind);
+			attackKind = _attackKind;
+			switch (_attackKind)
+			{
+				case eAttackKind.Normal:
+					Debug.Log(_pos + ":" + _rot);
+					Bullet _bullet = Instantiate(prefabBullet, _pos, _rot) as Bullet;
+					_bullet.SetData(20f, 10f);
+					break;
+				case eAttackKind.Skill1:
+				case eAttackKind.Skill2:
+				case eAttackKind.Skill3:
+					break;
+			}
+		}
+	}
+}

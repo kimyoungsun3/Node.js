@@ -1,0 +1,3 @@
+C:\Users\night\source\repos\SocketIOExample\chat\obj\Debug\chat.njsprojAssemblyReference.cache
+C:\Users\night\source\repos\SocketIOExample\chat\obj\Debug\chat.njsproj.CoreCompileInputs.cache
+C:\Users\night\source\repos\SocketIOExample\chat\bin\Microsoft.NodejsTools.WebRole.dll
