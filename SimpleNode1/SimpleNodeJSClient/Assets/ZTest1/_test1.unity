@@ -822,7 +822,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d4363a99236867a428ad487b21f5b89b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ip: 192.168.0.27
+  ip: 127.0.0.1
   port: 9900
   player: {fileID: 23, guid: c001741c5daaa7f4f962ab1c3e60227d, type: 3}
   myPlayer: {fileID: 0}
