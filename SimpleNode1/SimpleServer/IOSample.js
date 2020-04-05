@@ -9,7 +9,7 @@ var serverSocket 	= require('socket.io')({
 });
 
 serverSocket.attach(port);
-console.log('===== chat server start['+port+'] =======');
+console.log('===== server start['+port+'] =======');
 
 serverSocket.on("connect", (clientSocket) => {
 
@@ -85,6 +85,7 @@ serverSocket.on("connect", (clientSocket) => {
 	clientSocket.on("disconnect", (_data)=>{
 		console.log("[C -> S] disconnect %j", _data);
 		
+		//1. 리스트에서 종료자의 정보를 삭제한다.
 		for(var i = 0; i < userList.length; i++){
 			if(userList[i] == _id){
 				userList.splice(i, 1);

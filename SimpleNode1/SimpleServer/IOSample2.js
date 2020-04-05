@@ -147,6 +147,7 @@ serverSocket.on("connect", (clientSocket) =>{
 	clientSocket.on("disconnect", (_data)=>{
 		console.log("[C -> S] disconnect %j", _data);
 		
+		//1. 종료하는 사람의 리스트를 삭제한다...
 		for(var i = 0; i < userList.length; i++){
 			if(userList[i] == _id){
 				userList.splice(i, 1);

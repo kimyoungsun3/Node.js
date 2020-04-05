@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/ZTest1/_test2.unity
+- path: Assets/ZTest1/_test1_normal.unity
   isLoaded: 1
   isActive: 1

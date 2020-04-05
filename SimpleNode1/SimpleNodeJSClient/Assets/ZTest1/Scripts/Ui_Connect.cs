@@ -7,13 +7,18 @@ namespace NodeTest
 {
 	public class Ui_Connect : MonoBehaviour
 	{
-		[SerializeField] GameObject body;
-
-		public NetworkManager network;
-
-		public void InvokeConnect()
+		GameObject body;
+		private void Start()
 		{
-			network.Connect();
+			if(body == null)
+			{
+				body = transform.GetChild(0).gameObject;
+			}
+		}
+
+		public void Invoke_Connect()
+		{
+			NetworkManager.ins.Connect();
 			body.SetActive(false);
 		}
 	}

@@ -56,20 +56,24 @@ namespace NodeTest
 		{
 			Debug.Log(this + " Start");
 			ground = new Plane(-Vector3.forward, Vector3.zero);
-
 		}
 
 		public void SetData(SocketIOEvent _e, bool _isMy = false)
 		{
 
 			Debug.Log(this + " SetData");
+			if(playerData == null)
+			{
+				playerData = new PlayerData();
+			}
 			playerData.SetData(_e, _isMy);
 			isDead			= false;
 			trans			= transform;
 			beforePos		= trans.position;
 			beforeRotation	= trans.rotation;
 			NEXT_TIME		= 1 / SEND_PER_SECOND;
-			if (_isMy) {
+			if (_isMy)
+			{
 				cam = Camera.main;
 				cam.GetComponent<CameraController>().SetTarget(trans);
 			}

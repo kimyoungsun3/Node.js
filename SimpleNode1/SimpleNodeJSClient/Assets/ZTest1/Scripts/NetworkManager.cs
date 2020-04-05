@@ -103,6 +103,7 @@ namespace NodeTest
 				case Protocol.PTC_MOVE:
 					{
 						//Debug.Log("[C -> S] " + _type.ToString());
+						Debug.Log(myPlayer);
 						Transform _t = myPlayer.transform;
 
 						_json.AddField("id", myPlayer.playerData.id);
@@ -169,8 +170,10 @@ namespace NodeTest
 						Debug.Log("[C <- S] " + _type.ToString());
 
 						Player _player = Instantiate(player, Vector3.zero, Quaternion.identity) as Player;
+
 						_player.SetData(_e, true);
 						myPlayer = _player;
+						Debug.Log("PTS_LOGIN >> " + myPlayer);
 					}
 					break;
 				case Protocol.PTS_OTHER:
